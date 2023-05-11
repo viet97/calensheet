@@ -5,7 +5,9 @@ import styles from "./index.module.scss";
 import { Input } from "antd"
 import DateTimePicker from 'react-datetime-picker';
 import { WithContext as ReactTags } from 'react-tag-input';
-
+import Autocomplete from "react-google-autocomplete";
+import { map, trim } from 'lodash';
+import moment from "moment"
 const KeyCodes = {
   comma: 188,
   enter: 13,
@@ -17,21 +19,24 @@ export default function Home() {
   const [gisInited, setgisInited] = useState(false)
   const [gapiInited, setgapiInited] = useState(false)
   const [tokenClient, setTokenClient] = useState()
+  const [sheetId, setSheetId] = useState("")
   const [title, setTitle] = useState("")
   const [location, setLocation] = useState("")
   const [description, setDescription] = useState("")
   const [startTime, setStartTime] = useState(null)
   const [endTime, setEndTime] = useState(null)
   const [tags, setTags] = useState([]);
+  const [count, setCount] = useState(0)
+  const [storeName, setStoreName] = useState("")
 
+  const GG_MAP_API_KEY = "AIzaSyAF1uyOdZpqJNNYzqW0EUoPiro00PBbtC0"
   const CLIENT_ID = "900185296667-dg1gdnl5rgtgch5hdtf5ns8aqhttvchu.apps.googleusercontent.com"
   const API_KEY = "AIzaSyAF1uyOdZpqJNNYzqW0EUoPiro00PBbtC0"
   const DISCOVERY_DOC = ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest',
     'https://sheets.googleapis.com/$discovery/rest?version=v4'];
-  const SCOPES = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/spreadsheets.readonly';
+  const SCOPES = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/spreadsheets';
   // const SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly'
   function gisLoaded() {
-    console.log("google.accounts.oauth2423")
     const tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope: SCOPES,
@@ -42,33 +47,7 @@ export default function Home() {
   }
 
   function gapiLoaded() {
-    console.log("google.accounts.oauth24")
-
     gapi.load('client', initializeGapiClient);
-  }
-
-  async function listMajors() {
-    let response;
-    try {
-      // Fetch first 10 files
-      console.log(" gapi.client.sheets.spreadsheets", gapi.client)
-      response = await gapi.client.sheets.spreadsheets.values.get({
-        spreadsheetId: '12cV3RgWhlI-VBRzGOvgzrXwpfcpV0_1jRhXeOlPGoNM',
-        range: 'Tóm tắt',
-      });
-    } catch (err) {
-      console.error("err", err)
-    }
-    const range = response?.result;
-    if (!range || !range.values || range.values.length == 0) {
-      console.log("noValueFound")
-      return;
-    }
-    // Flatten to string to display
-    const output = range.values.reduce(
-      (str, row) => `${str}${row[0]} - ${row[1]} - ${row[2]}\n`,
-      'Name, Major:\n');
-    console.log("output", output)
   }
 
   function handleAuthClick() {
@@ -76,8 +55,6 @@ export default function Home() {
       if (resp.error !== undefined) {
         throw (resp);
       }
-      console.log("response", google.accounts)
-      await listMajors();
     };
 
     if (gapi.client.getToken() === null) {
@@ -103,6 +80,7 @@ export default function Home() {
   };
 
   const handleAddition = tag => {
+    console.log("tag", tag)
     setTags([...tags, tag]);
   };
 
@@ -119,28 +97,27 @@ export default function Home() {
 
   const createEvent = () => {
     const event = {
-      'summary': 'Google I/O 2015',
-      'location': '800 Howard St., San Francisco, CA 94103',
-      'description': 'A chance to hear more about Google\'s developer products.',
+      'summary': trim(title),
+      'location': trim(location),
+      'description': trim(description),
       'start': {
         'dateTime': '2023-05-11T09:00:00',
-        'timeZone': 'America/Los_Angeles'
+        'timeZone': 'Asia/Ho_Chi_Minh'
       },
       'end': {
         'dateTime': '2023-05-11T17:00:00',
-        'timeZone': 'America/Los_Angeles'
+        'timeZone': 'Asia/Ho_Chi_Minh'
       },
       // 'recurrence': [
       //   'RRULE:FREQ=DAILY;COUNT=2'
       // ],
-      'attendees': [
-        { 'email': 'lpage@example.com' },
-        { 'email': 'sbrin@example.com' }
-      ],
+      'attendees': map(tags, tag => ({
+        'email': tag?.text
+      })),
       'reminders': {
         'useDefault': false,
         'overrides': [
-          { 'method': 'email', 'minutes': 24 * 60 },
+          // { 'method': 'email', 'minutes': 24 * 60 },
           { 'method': 'popup', 'minutes': 10 }
         ]
       }
@@ -153,9 +130,35 @@ export default function Home() {
 
     request.execute(function (event) {
     });
+
+    //gg sheet api
+    let values = [
+      [
+        trim(storeName), trim(title), trim(count), new Date(), new Date(), "", trim(description)
+      ],
+    ];
+    const body = {
+      values: values,
+    };
+    try {
+      gapi.client.sheets.spreadsheets.values.append({
+        spreadsheetId: sheetId,
+        range: 'Trang tính1',
+        valueInputOption: "USER_ENTERED",
+        resource: body,
+      }).then((response) => {
+        const result = response.result;
+        console.log(`result`, result);
+      });
+    } catch (reason) {
+      console.error("create Sheet Error", reason?.message)
+    }
+
   }
 
-  const onChangeEndTime = date => {
+  const onChangeEndTime = (date) => {
+    const date1 = new Date()
+    date1.toLocaleString
     setEndTime(date)
   }
 
@@ -176,44 +179,58 @@ export default function Home() {
           className={styles.email}>
           User:
         </div>
+
         <div
           className={styles.title}>
-          Event Title :  <Input
+          Sheet Id:  <Input
+            className={styles.input}
+            placeholder="Enter id"
+            value={sheetId}
+            onChange={(e) => setSheetId(e.target.value)}
+          />
+        </div>
+
+        <div
+          className={styles.title}>
+          Chương trình :  <Input
             className={styles.input}
             placeholder="Enter Title"
-          // value={val}
-          // onChange={(e) => handleChange(e)}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
           />
         </div>
         <div
           className={styles.title}>
-          Event Location :  <Input
-            className={styles.input}
-            placeholder="Enter Location"
-          // value={val}
-          // onChange={(e) => handleChange(e)}
+          Địa điểm :  <Autocomplete
+            language="vi"
+            apiKey={GG_MAP_API_KEY}
+            onPlaceSelected={(place) => {
+              setLocation(place?.formatted_address || "")
+            }}
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
           />
         </div>
         <div
           className={styles.title}>
-          Event Description :  <Input
+          Nội dung :  <Input
             className={styles.input}
             placeholder="Enter Description"
-          // value={val}
-          // onChange={(e) => handleChange(e)}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
           />
         </div>
         <div
           className={styles.title}>
-          Start Time :   <DateTimePicker onChange={onChangeStartTime} value={startTime} />
+          Bắt đầu :   <DateTimePicker onChange={onChangeStartTime} value={startTime} locale="" />
         </div>
         <div
           className={styles.title}>
-          End Time : <DateTimePicker onChange={onChangeEndTime} value={endTime} />
+          Kết thúc : <DateTimePicker onChange={onChangeEndTime} value={endTime} />
         </div>
         <div
           className={styles.title}>
-          Attendees :  <ReactTags
+          Người tham dự (Enter, space hoặc dấu phẩy để thêm email mới) :  <ReactTags
             tags={tags}
             suggestions={[]}
             delimiters={delimiters}
@@ -225,6 +242,33 @@ export default function Home() {
           />
         </div>
 
+        <div
+          className={styles.title}>
+          Số lượng cơ sở :  <Input
+            className={styles.input}
+            placeholder="Enter number"
+            type="number"
+            value={count}
+            onChange={(e) => setCount(e.target.value)}
+          />
+        </div>
+
+        <div
+          className={styles.title}>
+          Chuỗi :  <Input
+            className={styles.input}
+            placeholder="Enter StoreName"
+            value={storeName}
+            onChange={(e) => setStoreName(e.target.value)}
+          />
+        </div>
+
+
+        <div
+          onClick={createEvent}
+          className={styles.createEvent}>
+          Create Event
+        </div>
       </div>
     </div>
     <Script async defer src="https://apis.google.com/js/api.js" onLoad={gapiLoaded} onError={e => console.log(e)} ></Script>
