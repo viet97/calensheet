@@ -1,0 +1,27 @@
+[debug] [2023-05-12T08:28:01.887Z] ----------------------------------------------------------------------
+[debug] [2023-05-12T08:28:01.888Z] Command:       /Users/vietdq/.nvm/versions/node/v16.13.0/bin/node /Users/vietdq/.nvm/versions/node/v16.13.0/bin/firebase deploy
+[debug] [2023-05-12T08:28:01.888Z] CLI Version:   12.0.0
+[debug] [2023-05-12T08:28:01.888Z] Platform:      darwin
+[debug] [2023-05-12T08:28:01.888Z] Node Version:  v16.13.0
+[debug] [2023-05-12T08:28:01.889Z] Time:          Fri May 12 2023 15:28:01 GMT+0700 (Indochina Time)
+[debug] [2023-05-12T08:28:01.889Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2023-05-12T08:28:01.923Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2023-05-12T08:28:01.923Z] > authorizing via signed-in user (quocvietdang97@gmail.com)
+[debug] [2023-05-12T08:28:01.923Z] [iam] checking project calensheet for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2023-05-12T08:28:01.924Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/calensheet:testIamPermissions [none]
+[debug] [2023-05-12T08:28:01.924Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/calensheet:testIamPermissions x-goog-quota-user=projects/calensheet
+[debug] [2023-05-12T08:28:01.924Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/calensheet:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2023-05-12T08:28:03.269Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/calensheet:testIamPermissions 200
+[debug] [2023-05-12T08:28:03.269Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/calensheet:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2023-05-12T08:28:03.270Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/calensheet [none]
+[debug] [2023-05-12T08:28:03.725Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/calensheet 200
+[debug] [2023-05-12T08:28:03.726Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/calensheet {"projectId":"calensheet","projectNumber":"586567881063","displayName":"CalenSheet","name":"projects/calensheet","resources":{"hostingSite":"calensheet"},"state":"ACTIVE","etag":"1_d833673f-7323-49dd-a4a8-ebd778eb921b"}
+[debug] [2023-05-12T08:28:10.814Z] Error: Unable to load next.config.js.
+    at getConfig (/Users/vietdq/.nvm/versions/node/v16.13.0/lib/node_modules/firebase-tools/lib/frameworks/next/index.js:392:23)
+    at processTicksAndRejections (node:internal/process/task_queues:96:5)
+    at async build (/Users/vietdq/.nvm/versions/node/v16.13.0/lib/node_modules/firebase-tools/lib/frameworks/next/index.js:61:50)
+    at async prepareFrameworks (/Users/vietdq/.nvm/versions/node/v16.13.0/lib/node_modules/firebase-tools/lib/frameworks/index.js:207:122)
+    at async deploy (/Users/vietdq/.nvm/versions/node/v16.13.0/lib/node_modules/firebase-tools/lib/deploy/index.js:55:13)
+[error] 
+[error] Error: An unexpected error has occurred.

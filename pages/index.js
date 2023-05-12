@@ -6,8 +6,10 @@ import { Input } from "antd"
 import DateTimePicker from 'react-datetime-picker';
 import { WithContext as ReactTags } from 'react-tag-input';
 import Autocomplete from "react-google-autocomplete";
-import { map, trim } from 'lodash';
-import moment from "moment"
+import { map, replace, trim } from 'lodash';
+import { toast } from 'react-toastify';
+import moment from 'moment';
+
 const KeyCodes = {
   comma: 188,
   enter: 13,
@@ -20,11 +22,12 @@ export default function Home() {
   const [gapiInited, setgapiInited] = useState(false)
   const [tokenClient, setTokenClient] = useState()
   const [sheetId, setSheetId] = useState("")
+  const [sheetName, setSheetName] = useState("")
   const [title, setTitle] = useState("")
   const [location, setLocation] = useState("")
   const [description, setDescription] = useState("")
-  const [startTime, setStartTime] = useState(null)
-  const [endTime, setEndTime] = useState(null)
+  const [startTime, setStartTime] = useState(new Date())
+  const [endTime, setEndTime] = useState(new Date())
   const [tags, setTags] = useState([]);
   const [count, setCount] = useState(0)
   const [storeName, setStoreName] = useState("")
@@ -80,7 +83,6 @@ export default function Home() {
   };
 
   const handleAddition = tag => {
-    console.log("tag", tag)
     setTags([...tags, tag]);
   };
 
@@ -96,17 +98,43 @@ export default function Home() {
 
 
   const createEvent = () => {
+    if (!trim(sheetId)) {
+      return toast("Vui lòng nhập Sheet Id")
+    }
+    if (!trim(sheetName)) {
+      return toast("Vui lòng nhập Sheet Name")
+    }
+    if (!trim(title)) {
+      return toast("Vui lòng nhập Chương trình")
+    }
+    if (!startTime) {
+      return toast("Vui lòng nhập thời gian bắt đầu")
+    }
+    if (!endTime) {
+      return toast("Vui lòng nhập thời gian kết thúc")
+    }
+
+    if (startTime >= endTime) {
+      return toast("Khoảng thời gian ko hợp lệ")
+    }
+    if (!trim(count)) {
+      return toast("Vui lòng nhập số lượng cơ sở")
+    }
+
+    if (!trim(storeName)) {
+      return toast("Vui lòng nhập chuỗi")
+    }
     const event = {
       'summary': trim(title),
       'location': trim(location),
       'description': trim(description),
       'start': {
-        'dateTime': '2023-05-11T09:00:00',
-        'timeZone': 'Asia/Ho_Chi_Minh'
+        'dateTime': replace(startTime.toISOString(), ".000Z", ""),
+        'timeZone': 'America/New_York'
       },
       'end': {
-        'dateTime': '2023-05-11T17:00:00',
-        'timeZone': 'Asia/Ho_Chi_Minh'
+        'dateTime': replace(endTime.toISOString(), ".000Z", ""),
+        'timeZone': 'America/New_York'
       },
       // 'recurrence': [
       //   'RRULE:FREQ=DAILY;COUNT=2'
@@ -129,12 +157,13 @@ export default function Home() {
     });
 
     request.execute(function (event) {
+      toast("Tạo event thành công")
     });
 
     //gg sheet api
     let values = [
       [
-        trim(storeName), trim(title), trim(count), new Date(), new Date(), "", trim(description)
+        trim(storeName), trim(title), trim(count), moment(startTime).format("MM/DD/YYYY"), moment(endTime).format("MM/DD/YYYY"), "", trim(description)
       ],
     ];
     const body = {
@@ -143,22 +172,25 @@ export default function Home() {
     try {
       gapi.client.sheets.spreadsheets.values.append({
         spreadsheetId: sheetId,
-        range: 'Trang tính1',
+        range: `${sheetName}!A1`,
         valueInputOption: "USER_ENTERED",
         resource: body,
       }).then((response) => {
         const result = response.result;
-        console.log(`result`, result);
+        if (result) {
+          toast("Tạo sheet thành công")
+        }
       });
     } catch (reason) {
       console.error("create Sheet Error", reason?.message)
+      if (result) {
+        toast("Tạo sheet thất bại")
+      }
     }
 
   }
 
   const onChangeEndTime = (date) => {
-    const date1 = new Date()
-    date1.toLocaleString
     setEndTime(date)
   }
 
@@ -187,6 +219,16 @@ export default function Home() {
             placeholder="Enter id"
             value={sheetId}
             onChange={(e) => setSheetId(e.target.value)}
+          />
+        </div>
+
+        <div
+          className={styles.title}>
+          Sheet Name:  <Input
+            className={styles.input}
+            placeholder="Enter name"
+            value={sheetName}
+            onChange={(e) => setSheetName(e.target.value)}
           />
         </div>
 
@@ -222,11 +264,16 @@ export default function Home() {
         </div>
         <div
           className={styles.title}>
-          Bắt đầu :   <DateTimePicker onChange={onChangeStartTime} value={startTime} locale="" />
+          Bắt đầu :   <DateTimePicker
+            minDate={new Date()}
+            format='dd-MM-yyyy h:mm:ss a'
+            onChange={onChangeStartTime} value={startTime} />
         </div>
         <div
           className={styles.title}>
-          Kết thúc : <DateTimePicker onChange={onChangeEndTime} value={endTime} />
+          Kết thúc : <DateTimePicker
+            minDate={new Date()}
+            format='dd-MM-yyyy h:mm:ss a' onChange={onChangeEndTime} value={endTime} />
         </div>
         <div
           className={styles.title}>
